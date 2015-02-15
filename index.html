@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset=UTF-8>
+</head>
+<body>
+
+<canvas id="app"></canvas>
+
+<script src="tmlib.js"></script>
+<script>
+tm.define("tm.input.Gamepad", {
+    init: function() {
+        this.buttons = {};
+        [
+            "a",
+            "b",
+            "x",
+            "y",
+            "l1",
+            "l2",
+            "r1",
+            "r2",
+            "start",
+            "select",
+            "l3",
+            "r3",
+            "up",
+            "down",
+            "left",
+            "right",
+        ].forEach(function(buttonName) {
+            this.buttons[buttonName] = {
+                value: 0,
+                pressed: false,
+            };
+        }.bind(this));
+
+        this.sticks = [];
+        this.sticks[0] = tm.geom.Vector2(0, 0);
+        this.sticks[1] = tm.geom.Vector2(0, 0);
+
+        this.gamepads = [];
+        this.prevRawGamepadsTypes = [];
+        this.prevTimestamps = [];
+
+        this.getGamepads = null;
+        if (navigator.getGamepads) {
+            this.getGamepads = function() {
+                return navigator.getGamepads();
+            };
+        } else if (navigator.webkitGetGamepads) {
+            this.getGamepads = function() {
+                return navigator.webkitGetGamepads();
+            }
+        }
+    },
+    update: function() {
+        this._pollGamepads();
+
+        for (var i in this.gamepads) {
+            var gamepad = this.gamepads[i];
+
+            if (gamepad.timestamp && (gamepad.timestamp === this.prevTimestamps[i])) {
+                continue;
+            }
+
+            this.prevTimestamps[i] = gamepad.timestamp;
+            this._updateState(i);
+        }
+    },
+
+    getButton: function(buttonName) {
+        return this.buttons[buttonName].value;
+    },
+    getButtonDown: function(buttonName) {
+    },
+    getButtonUp: function(buttonName) {
+    },
+    getAngle: function(stickId) {
+        stickId = stickId || 0;
+    },
+    getDirection: function(stickId) {
+        stickId = stickId || 0;
+    },
+
+    /**
+     * @private
+     */
+    _pollGamepads: function() {
+        var rawGamepads = this.getGamepads();
+        if (rawGamepads) {
+            var gamepadChanged = false;
+            this.gamepads.clear();
+            for (var i = 0, len = rawGamepads.length; i < len; i++) {
+
+                if (typeof rawGamepads[i] != this.prevRawGamepadsTypes[i]) {
+                    gamepadChanged = true;
+                    this.prevRawGamepadsTypes[i] = typeof rawGamepads[i];
+                }
+
+                if (rawGamepads[i]) {
+                    this.gamepads.push(rawGamepads[i]);
+                }
+            }
+
+            if (gamepadChanged) {
+                // TODO fire updateEvent
+            }
+        }
+    },
+
+    /**
+     * @private
+     */
+    _updateState: function(gamepadId) {
+        var gamepad = this.gamepads[gamepadId];
+        this._updateButton(gamepad.buttons[0], gamepadId, "a");
+        this._updateButton(gamepad.buttons[1], gamepadId, "b");
+        this._updateButton(gamepad.buttons[2], gamepadId, "x");
+        this._updateButton(gamepad.buttons[3], gamepadId, "y");
+
+        this._updateButton(gamepad.buttons[4], gamepadId, "l1");
+        this._updateButton(gamepad.buttons[5], gamepadId, "l2");
+        this._updateButton(gamepad.buttons[6], gamepadId, "r1");
+        this._updateButton(gamepad.buttons[7], gamepadId, "r2");
+
+        this._updateButton(gamepad.buttons[8], gamepadId, "select");
+        this._updateButton(gamepad.buttons[9], gamepadId, "start");
+
+        this._updateButton(gamepad.buttons[10], gamepadId, "l3");
+        this._updateButton(gamepad.buttons[11], gamepadId, "r3");
+
+        this._updateButton(gamepad.buttons[12], gamepadId, "up");
+        this._updateButton(gamepad.buttons[13], gamepadId, "down");
+        this._updateButton(gamepad.buttons[14], gamepadId, "left");
+        this._updateButton(gamepad.buttons[15], gamepadId, "right");
+
+        this._updateStick(gamepad.axes[0], gamepadId, 0, "x");
+        this._updateStick(gamepad.axes[1], gamepadId, 0, "y");
+        this._updateStick(gamepad.axes[2], gamepadId, 1, "x");
+        this._updateStick(gamepad.axes[3], gamepadId, 1, "y");
+    },
+
+    _updateButton: function(button, gamepadId, buttonName) {
+        console.log("_updateButton", buttonName, button);
+
+        var value;
+        var pressed;
+
+        if (typeof button === 'object') {
+            value = button.value;
+            pressed = button.pressed;
+        } else {
+            value = button;
+            pressed = button > tm.input.Gamepad.ANALOGUE_BUTTON_THRESHOLD;
+        }
+
+        if (this.buttons[buttonName] === undefined) {
+            this.buttons[buttonName] = {
+                value: 0,
+                pressed: false,
+            };
+        }
+
+        this.buttons[buttonName].value = value;
+        this.buttons[buttonName].pressed = pressed;
+    },
+
+    _updateStick: function(value, gamepadId, stickId, axisName) {
+        if (this.sticks[stickId] === undefined) {
+            this.sticks[stickId] = tm.geom.Vector2(0, 0);
+        }
+        this.sticks[stickId][axisName] = value;
+    },
+});
+
+tm.input.Gamepad.ANALOGUE_BUTTON_THRESHOLD = 0.5;
+
+tm.main(function() {
+    var app = tm.display.CanvasApp("#app");
+    app.resize(500, 500).fitWindow();
+    app.gamepad = tm.input.Gamepad();
+    app.update = function() {
+        this.gamepad.update();
+    };
+
+    tm.display.RectangleShape(50, 50)
+        .setPosition(250, 250)
+        .on("enterframe", function(e) {
+            var app = e.app;
+            var gamepad = app.gamepad;
+            this.position.add(tm.geom.Vector2.mul(gamepad.stick1, 10));
+
+            if (gamepad.getButton("a")) this.scale.x += 0.1;
+            if (gamepad.getButton("b")) this.scale.x -= 0.1;
+            if (gamepad.getButton("x")) this.scale.y += 0.1;
+            if (gamepad.getButton("y")) this.scale.y -= 0.1;
+        })
+        .addChildTo(app.currentScene);
+
+    app.run();
+});
+</script>
+</body>
+</html>
