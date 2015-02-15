@@ -9,6 +9,8 @@
 
 <script src="tmlib.js"></script>
 <script>
+(function() {
+
 tm.define("tm.input.Gamepad", {
     init: function() {
         this.buttons = {};
@@ -177,25 +179,37 @@ tm.define("tm.input.Gamepad", {
 
 tm.input.Gamepad.ANALOGUE_BUTTON_THRESHOLD = 0.5;
 
+tm.input.Gamepad.isAvailable = (!!navigator.getGamepads) || (!!navigator.webkitGetGamepads);
+
+})();
+
 tm.main(function() {
     var app = tm.display.CanvasApp("#app");
     app.resize(500, 500).fitWindow();
-    app.gamepad = tm.input.Gamepad();
-    app.update = function() {
-        this.gamepad.update();
-    };
+
+    if (tm.input.Gamepad.isAvailable) {
+        app.gamepad = tm.input.Gamepad();
+        app.update = function() {
+            this.gamepad.update();
+        };
+    }
 
     tm.display.RectangleShape(50, 50)
         .setPosition(250, 250)
         .on("enterframe", function(e) {
             var app = e.app;
-            var gamepad = app.gamepad;
-            this.position.add(tm.geom.Vector2.mul(gamepad.stick1, 10));
 
-            if (gamepad.getButton("a")) this.scale.x += 0.1;
-            if (gamepad.getButton("b")) this.scale.x -= 0.1;
-            if (gamepad.getButton("x")) this.scale.y += 0.1;
-            if (gamepad.getButton("y")) this.scale.y -= 0.1;
+            if (app.frame > 2) return;
+
+            if (tm.input.Gamepad.isAvailable) {
+                var gamepad = app.gamepad;
+                this.position.add(tm.geom.Vector2.mul(gamepad.sticks[0], 10));
+
+                if (gamepad.getButton("a")) this.scale.x += 0.1;
+                if (gamepad.getButton("b")) this.scale.x -= 0.1;
+                if (gamepad.getButton("x")) this.scale.y += 0.1;
+                if (gamepad.getButton("y")) this.scale.y -= 0.1;
+            }
         })
         .addChildTo(app.currentScene);
 
