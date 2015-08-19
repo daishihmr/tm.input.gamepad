@@ -11,6 +11,7 @@
 
 <script src="tmlib.js"></script>
 <script src="gamepad.js"></script>
+<script src="gamepadconfigscene.js"></script>
 
 <script>
 tm.main(function() {
@@ -20,10 +21,10 @@ tm.main(function() {
     if (tm.input.Gamepad.isAvailable) {
         app.gamepads = tm.input.GamepadManager();
         app.gamepads.on("connected", function(e) {
-            console.log(e.gamepad);
+            console.log("connected");
         });
         app.gamepads.on("disconnected", function(e) {
-            console.log(e.gamepad);
+            console.log("disconnected");
         });
         app.update = function() {
             this.gamepads._update();
@@ -53,6 +54,17 @@ tm.main(function() {
                 this.off("enterframe", arguments.callee);
                 throw e;
             }
+        })
+        .addChildTo(app.currentScene);
+        
+    tm.ui.FlatButton({ text: "config", fontSize: 15, width: 100, height: 30 })
+        .setPosition(55, 20)
+        .on("push", function() {
+            var configScene = tm.game.GamepadConfigScene({
+                width: 500,
+                height: 500,
+            });
+            app.pushScene(configScene);
         })
         .addChildTo(app.currentScene);
 
