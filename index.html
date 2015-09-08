@@ -2,24 +2,24 @@
 <html lang="ja">
 
 <head>
-    <meta charset=UTF-8>
+<meta charset=UTF-8>
 </head>
 
 <body>
-
 <canvas id="app"></canvas>
-
 <script src="tmlib.js"></script>
 <script src="gamepad.js"></script>
-<script src="gamepadconfigscene.js"></script>
-
+<script src="gamepadshape.js"></script>
 <script>
+var SCREEN_WIDTH = 960;
+var SCREEN_HEIGHT = 640;
+
 tm.main(function() {
     var app = tm.display.CanvasApp("#app");
-    app.resize(500, 500).fitWindow();
+    app.resize(SCREEN_WIDTH, SCREEN_HEIGHT).fitWindow();
+    app.gamepads = tm.input.GamepadManager();
 
     if (tm.input.Gamepad.isAvailable) {
-        app.gamepads = tm.input.GamepadManager();
         app.gamepads.on("connected", function(e) {
             console.log("connected");
         });
@@ -31,47 +31,76 @@ tm.main(function() {
         };
     }
 
-    tm.display.RectangleShape({ width: 50, height: 50 })
-        .setPosition(250, 250)
-        .on("enterframe", function(e) {
-            try {
-                var app = e.app;
-
-                if (tm.input.Gamepad.isAvailable) {
-                    var pad0 = app.gamepads.get(0);
-
-                    var v = tm.geom.Vector2.add(pad0.getKeyDirection(), pad0.getStickVector());
-                    if (0.1 * 0.1 < v.lengthSquared()) {
-                        this.position.add(tm.geom.Vector2.mul(v, 10));
-                    }
-
-                    if (pad0.getKey("a")) this.scale.x += 0.1;
-                    if (pad0.getKey("b")) this.scale.x -= 0.1;
-                    if (pad0.getKey("x")) this.scale.y += 0.1;
-                    if (pad0.getKey("y")) this.scale.y -= 0.1;
-                }
-            } catch (e) {
-                this.off("enterframe", arguments.callee);
-                throw e;
-            }
+    var shape = tm.input.GamepadShape({
+            width: SCREEN_WIDTH * 0.75,
+            height: SCREEN_HEIGHT * 0.75,
+            activeFillStyle: "red",
+            strokeStyle: "rgba(255, 255, 255, 0.5)",
+            fillStyle: "rgba(100, 100, 100, 0.5)",
+            activeStrokeStyle: "rgba(255, 255, 255, 0.5)",
+            activeFillStyle: "rgba(150, 150, 0, 0.5)",
         })
+        .setPosition(SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)
         .addChildTo(app.currentScene);
-        
-    tm.ui.FlatButton({ text: "config", fontSize: 15, width: 100, height: 30 })
-        .setPosition(55, 20)
-        .on("push", function() {
-            var configScene = tm.game.GamepadConfigScene({
-                width: 500,
-                height: 500,
-            });
-            app.pushScene(configScene);
+
+    tm.display.RectangleShape({
+            width: 50,
+            height: 50
+        })
+        .setPosition(SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)
+        .on("enterframe", function(e) {
+            var app = e.app;
+
+            if (!tm.input.Gamepad.isAvailable) return;
+
+            var pad0 = app.gamepads.get(0);
+
+            var v = tm.geom.Vector2.lerp(pad0.getKeyDirection(), pad0.getStickVector(), 0.5);
+            if (0.25 < v.length()) {
+                this.position.add(tm.geom.Vector2.mul(v, 10));
+            }
+
+            if (pad0.getKey("a")) {
+                this.scale.x += 0.1;
+            }
+            if (pad0.getKey("b")) {
+                this.scale.x -= 0.1;
+            }
+            if (pad0.getKey("x")) {
+                this.scale.y += 0.1;
+            }
+            if (pad0.getKey("y")) {
+                this.scale.y -= 0.1;
+            }
+
+            shape.isActive["a"] = pad0.getKey("a");
+            shape.isActive["b"] = pad0.getKey("b");
+            shape.isActive["x"] = pad0.getKey("x");
+            shape.isActive["y"] = pad0.getKey("y");
+            shape.isActive["start"] = pad0.getKey("start");
+            shape.isActive["select"] = pad0.getKey("select");
+            shape.isActive["special"] = pad0.getKey("special");
+            shape.isActive["l1"] = pad0.getKey("l1");
+            shape.isActive["l2"] = pad0.getKey("l2");
+            shape.isActive["l3"] = pad0.getKey("l3");
+            shape.isActive["r1"] = pad0.getKey("r1");
+            shape.isActive["r2"] = pad0.getKey("r2");
+            shape.isActive["r3"] = pad0.getKey("r3");
+            shape.isActive["up"] = pad0.getKey("up");
+            shape.isActive["down"] = pad0.getKey("down");
+            shape.isActive["left"] = pad0.getKey("left");
+            shape.isActive["right"] = pad0.getKey("right");
+            shape.leftStickOffset.x = pad0.sticks[0].x;
+            shape.leftStickOffset.y = pad0.sticks[0].y;
+            shape.rightStickOffset.x = pad0.sticks[1].x;
+            shape.rightStickOffset.y = pad0.sticks[1].y;
+            shape.render();
         })
         .addChildTo(app.currentScene);
 
     app.run();
 });
 </script>
-
 </body>
 
 </html>

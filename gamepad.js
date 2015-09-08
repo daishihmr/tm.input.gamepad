@@ -412,8 +412,8 @@ tm.input = tm.input || {};
         "y": 3,
 
         "l1": 4,
-        "l2": 5,
-        "r1": 6,
+        "l2": 6,
+        "r1": 5,
         "r2": 7,
 
         "select": 8,
@@ -426,6 +426,8 @@ tm.input = tm.input || {};
         "down": 13,
         "left": 14,
         "right": 15,
+        
+        "special": 16,
 
         "A": 0,
         "B": 1,
@@ -433,8 +435,8 @@ tm.input = tm.input || {};
         "Y": 3,
 
         "L1": 4,
-        "L2": 5,
-        "R1": 6,
+        "L2": 6,
+        "R1": 5,
         "R2": 7,
 
         "SELECT": 8,
@@ -447,6 +449,8 @@ tm.input = tm.input || {};
         "DOWN": 13,
         "LEFT": 14,
         "RIGHT": 15,
+        
+        "SPECIAL": 16,
     };
 
     var ARROW_BIT_TO_ANGLE_TABLE = {
